@@ -6,16 +6,13 @@ import requests
 import xml.etree.ElementTree as ET
 from datetime import date
 
-# FastAPI app
 app = FastAPI()
 
-# Database setup
 DATABASE_URL = "sqlite:///./exchange_rates.db"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Database model
 class ExchangeRate(Base):
     __tablename__ = "exchange_rates"
     id = Column(Integer, primary_key=True, index=True)
@@ -23,10 +20,8 @@ class ExchangeRate(Base):
     rate = Column(Float, nullable=False)
     date = Column(Date, default=date.today)
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
-# Fetch exchange rates from XML
 EXTERNAL_XML_URL = "https://www.tcmb.gov.tr/kurlar/today.xml"
 
 def fetch_exchange_rates():
@@ -51,7 +46,6 @@ def fetch_exchange_rates():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching XML data: {str(e)}")
 
-# Save rates to database
 def save_rates_to_db(rates):
     db = SessionLocal()
     try:
@@ -71,7 +65,6 @@ def save_rates_to_db(rates):
     finally:
         db.close()
 
-# Routes
 @app.get("/fetch-rates/")
 def fetch_and_store_rates():
     rates = fetch_exchange_rates()
