@@ -83,20 +83,31 @@ def get_rates():
         db.close()
 
 @app.get("/convert/")
-def convert_currency(amount: float, from_currency: str, to_currency: str):
+def convert_currency(amount: float, to_currency: str, from_currency: str):
     db = SessionLocal()
     try:
-        from_rate = db.query(ExchangeRate).filter_by(currency_code=from_currency).order_by(ExchangeRate.date.desc()).first()
-        to_rate = db.query(ExchangeRate).filter_by(currency_code=to_currency).order_by(ExchangeRate.date.desc()).first()
+        
+        if from_currency == "TRY":
+            from_rate = 1.0
+        else:
+            from_rate_obj = db.query(ExchangeRate).filter_by(currency_code=from_currency).order_by(ExchangeRate.date.desc()).first()
+            if not from_rate_obj:
+                raise HTTPException(status_code=404, detail=f"Currency code {from_currency} not found")
+            from_rate = from_rate_obj.rate
+        
+        if to_currency == "TRY":
+            to_rate = 1.0
+        else:
+            to_rate_obj = db.query(ExchangeRate).filter_by(currency_code=to_currency).order_by(ExchangeRate.date.desc()).first()
+            if not to_rate_obj:
+                raise HTTPException(status_code=404, detail=f"Currency code {to_currency} not found")
+            to_rate = to_rate_obj.rate
 
-        if not from_rate or not to_rate:
-            raise HTTPException(status_code=404, detail="Currency code not found")
-
-        converted_amount = amount * (to_rate.rate / from_rate.rate)
+        converted_amount = amount * (to_rate / from_rate)
         return {
             "amount": amount,
-            "from_currency": from_currency,
             "to_currency": to_currency,
+            "from_currency": from_currency,
             "converted_amount": converted_amount
         }
     except Exception as e:
