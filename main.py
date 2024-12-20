@@ -36,7 +36,7 @@ def fetch_exchange_rates():
         for currency in root.findall('Currency'):
             code = currency.get('CurrencyCode')
             forex_buying = currency.find('ForexBuying').text
-            if forex_buying:  # Ensure there is a valid rate
+            if forex_buying:  
                 rates.append({
                     "currency_code": code,
                     "rate": float(forex_buying),
