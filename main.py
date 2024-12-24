@@ -5,6 +5,8 @@ from sqlalchemy.orm import sessionmaker
 import requests
 import xml.etree.ElementTree as ET
 from datetime import date
+import os
+
 
 app = FastAPI()
 
@@ -114,3 +116,20 @@ def convert_currency(amount: float, to_currency: str, from_currency: str):
         raise HTTPException(status_code=500, detail=f"Error converting currency: {str(e)}")
     finally:
         db.close()
+
+@app.get("/download-rates/")
+def download_rates():
+    try:
+        response = requests.get(EXTERNAL_XML_URL)
+        response.raise_for_status()
+        xml_data = response.content
+
+        current_dir = os.getcwd()  # Çalışma dizinini al
+        filename = os.path.join(current_dir, "today_rates.xml")  # Dosya adı ve yolu oluştur
+
+        with open(filename, "wb") as file:
+            file.write(xml_data)
+
+        return {"message": "XML file downloaded successfully", "file_path": filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error downloading XML data: {str(e)}")
